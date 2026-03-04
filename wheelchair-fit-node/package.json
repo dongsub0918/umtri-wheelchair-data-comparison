@@ -1,0 +1,9 @@
+{
+  "name": "wheelchair-fit-node",
+  "private": true,
+  "type": "module",
+  "description": "Headless wheelchair fit (same math as web tool). Used by wheelchair-data-comparison Python pipeline.",
+  "dependencies": {
+    "three": "^0.159.0"
+  }
+}

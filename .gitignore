@@ -1,0 +1,39 @@
+# Confidential / data
+*.csv
+*.xlsx
+digitizations/
+wheelchair-fit-node/model/
+
+# Python
+.venv/
+venv/
+.env
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Node
+wheelchair-fit-node/node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Logs / temp
+*.log
+.cache/
+tmp/
+temp/
