@@ -1,6 +1,6 @@
 # Wheelchair Fit Integration (Data Analysis)
 
-This project is a **data analysis pipeline**: it joins volunteer metadata with digitization measurements, runs the wheelchair fit logic (same math as the [web tool](https://humanshape.org/WheelchairTool/)) on each row’s demographics, and writes one CSV with both measured and fitted dimensions.
+This project is a **data analysis pipeline**: it joins volunteer metadata with digitization measurements, runs the wheelchair fit logic (same math as the [web tool](https://humanshape.org/WheelchairTool/)) on each row's demographics, and writes one CSV with both measured and fitted dimensions.
 
 No browser or web server is required. Fit runs in Node using the same formulas as the tool.
 
