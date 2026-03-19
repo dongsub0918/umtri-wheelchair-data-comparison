@@ -29,7 +29,7 @@ const PRED_LANDMARK_NUM = 0;
 const HUMAN_ROTATION = new THREE.Vector3(
   (-73 * Math.PI) / 180,
   0,
-  (90 * Math.PI) / 180
+  (90 * Math.PI) / 180,
 );
 
 const LEFT_THIGH_INDEX = 1359;
@@ -54,9 +54,15 @@ function parsePlyVertices(filePath) {
   if (isBinary) {
     const littleEndian = /binary_little_endian/i.test(header);
     for (let i = 0; i < vertexCount; i++) {
-      const x = littleEndian ? buf.readFloatLE(offset) : buf.readFloatBE(offset);
-      const y = littleEndian ? buf.readFloatLE(offset + 4) : buf.readFloatBE(offset + 4);
-      const z = littleEndian ? buf.readFloatLE(offset + 8) : buf.readFloatBE(offset + 8);
+      const x = littleEndian
+        ? buf.readFloatLE(offset)
+        : buf.readFloatBE(offset);
+      const y = littleEndian
+        ? buf.readFloatLE(offset + 4)
+        : buf.readFloatBE(offset + 4);
+      const z = littleEndian
+        ? buf.readFloatLE(offset + 8)
+        : buf.readFloatBE(offset + 8);
       geometryZero.push({ x, y, z });
       offset += 12;
     }
@@ -121,7 +127,7 @@ function updateHumanGeometry(anth, geometry, geometryZero, PCAdata) {
       i,
       geometryZero[i].x + diffx,
       geometryZero[i].y + diffy,
-      geometryZero[i].z + diffz
+      geometryZero[i].z + diffz,
     );
   }
   positions.needsUpdate = true;
@@ -141,17 +147,17 @@ function createHumanMesh(geometry) {
   return mesh;
 }
 
-function calculateOptimalSeatWidth(humanMesh) {
+function calculateOptimalSeatWidth(humanMesh, wheelchairType) {
   const thighWidth = calculateDistanceBetweenPoints(
     humanMesh,
     LEFT_THIGH_INDEX,
     RIGHT_THIGH_INDEX,
     true,
     false,
-    false
+    false,
   );
-  const padding = 1;
-  return mToIn(thighWidth) + padding * 2;
+  // Add extra side padding for powered wheelchairs.
+  return mToIn(thighWidth) + (wheelchairType === "powered" ? 2 : -2);
 }
 
 function calculateOptimalSeatDepth(humanMesh, wheelchairType) {
@@ -161,13 +167,18 @@ function calculateOptimalSeatDepth(humanMesh, wheelchairType) {
     FARTHEST_BACK_INDEX,
     false,
     false,
-    true
+    true,
   );
-  let padding = wheelchairType === "powered" ? -1 : 0;
+  let padding = wheelchairType === "powered" ? -1 : -6;
   return mToIn(thighLength) + padding;
 }
 
-function calculateOptimalBackHeight(humanMesh, seatWidth, wheelchairType, wheelchairParams) {
+function calculateOptimalBackHeight(
+  humanMesh,
+  seatWidth,
+  wheelchairType,
+  wheelchairParams,
+) {
   const scapulaWorld = getHumanModelWorldCoordinates(humanMesh, SCAPULA_INDEX);
   const spinalWorld = getHumanModelWorldCoordinates(humanMesh, SPINAL_INDEX);
   const seatWidthM = inToM(seatWidth);
@@ -175,26 +186,32 @@ function calculateOptimalBackHeight(humanMesh, seatWidth, wheelchairType, wheelc
     return mToIn(scapulaWorld.y - seatWidthM);
   }
   const seatBottom = inToM(
-    wheelchairParams.seatPanHeight + wheelchairParams.seatCushThick
+    wheelchairParams.seatPanHeight + wheelchairParams.seatCushThick,
   );
   return mToIn(spinalWorld.y - seatBottom);
 }
 
-function calculateOptimalSeatPanHeight(humanMesh, wheelchairType, wheelchairParams) {
+function calculateOptimalSeatPanHeight(
+  humanMesh,
+  wheelchairType,
+  wheelchairParams,
+) {
   if (wheelchairType === "powered") {
     const seatPanHeightTop = humanMesh.position.clone();
-    const humanBottom = getHumanModelWorldCoordinates(humanMesh, HUMAN_BOTTOM_INDEX);
+    const humanBottom = getHumanModelWorldCoordinates(
+      humanMesh,
+      HUMAN_BOTTOM_INDEX,
+    );
     const clearance = 4.5;
-    const padding = 1;
     return (
       mToIn(seatPanHeightTop.y) -
       mToIn(humanBottom.y) +
       clearance -
       wheelchairParams.seatCushThick +
-      padding
+      5.3
     );
   }
-  return wheelchairParams.seatPanHeight;
+  return wheelchairParams.seatPanHeight + 3.67;
 }
 
 function validateWheelchairParams(params) {
@@ -226,18 +243,24 @@ function runFit(anth, wheelchairType) {
   const humanMesh = createHumanMesh(geom);
 
   const optimalParams = { ...baseParams };
-  optimalParams.seatWidth = calculateOptimalSeatWidth(humanMesh);
+  optimalParams.seatWidth = calculateOptimalSeatWidth(
+    humanMesh,
+    wheelchairType,
+  );
   optimalParams.seatBackHeight = calculateOptimalBackHeight(
     humanMesh,
     optimalParams.seatWidth,
     wheelchairType,
-    baseParams
+    baseParams,
   );
-  optimalParams.seatDepth = calculateOptimalSeatDepth(humanMesh, wheelchairType);
+  optimalParams.seatDepth = calculateOptimalSeatDepth(
+    humanMesh,
+    wheelchairType,
+  );
   optimalParams.seatPanHeight = calculateOptimalSeatPanHeight(
     humanMesh,
     wheelchairType,
-    baseParams
+    baseParams,
   );
   validateWheelchairParams(optimalParams);
   return {
@@ -261,7 +284,9 @@ function mapWheelchairType(t) {
 
 async function main() {
   if (!fs.existsSync(MEAN_PLY)) {
-    console.error(`Missing ${MEAN_PLY}. Put model files in wheelchair-fit-node/model/`);
+    console.error(
+      `Missing ${MEAN_PLY}. Put model files in wheelchair-fit-node/model/`,
+    );
     process.exit(1);
   }
   if (!fs.existsSync(ANTH_CSV)) {
@@ -301,7 +326,7 @@ async function main() {
       AGE: Number(row.age ?? row.Age ?? 40),
     };
     const wheelchairType = mapWheelchairType(
-      row.wheelchairType ?? row["WC Type"] ?? "manual"
+      row.wheelchairType ?? row["WC Type"] ?? "manual",
     );
     try {
       const fitted = runFit(anth, wheelchairType);

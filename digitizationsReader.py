@@ -443,10 +443,9 @@ def _count_valid_points(ordered_points: list[tuple[str, tuple[float, float, floa
 def count_dirs_both_seat_files_malformed(dir_path: str = "digitizations") -> int:
     """
     Count ID-level directories where both Seat_Points.txt and SeatCushion_Points.txt
-    are malformed (fewer than 3 valid points in each). Prints the count and returns it.
+    are malformed (fewer than 3 valid points in each). Returns the count.
     """
     if not os.path.isdir(dir_path):
-        print("Directories with both Seat and SeatCushion malformed (< 3 valid points each): 0")
         return 0
     count = 0
     for name in os.listdir(dir_path):
@@ -473,7 +472,6 @@ def count_dirs_both_seat_files_malformed(dir_path: str = "digitizations") -> int
                 cushion_valid = _count_valid_points(cushion_ordered)
             if seat_valid < 3 and cushion_valid < 3:
                 count += 1
-    print(f"Directories with both Seat_Points and SeatCushion_Points malformed (< 3 valid points each): {count}")
     return count
 
 
@@ -528,7 +526,6 @@ class DigitizationsReader:
                     debug_out_dir=level2,
                 )
                 for p in disformed:
-                    print(p)
                     disformed_paths.add(p)
                 if invalid_reason is not None:
                     invalidated_reason[nid] = invalid_reason
@@ -544,12 +541,10 @@ class DigitizationsReader:
                     "seatDepth": seat_depth,
                     "panHeight": pan_height,
                 })
-        if disformed_paths:
-            print(f"Total disformed txt files: {len(disformed_paths)}")
         for nid, reason in sorted(invalidated_reason.items()):
-            print(f"{nid} was invalidated because {reason} was impossible to calculate")
+            _ = (nid, reason)  # no-op: kept for debugging context without printing
         if total_dirs > 0:
-            print(f"Directories invalidated (parameter impossible to calculate): {len(invalidated_reason)} / {total_dirs}")
+            _ = (len(invalidated_reason), total_dirs)  # no-op: kept for debugging context without printing
         if not rows:
             self.df = pd.DataFrame(columns=["ID", "seatWidth", "seatDepth", "panHeight"])
         else:

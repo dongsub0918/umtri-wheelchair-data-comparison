@@ -90,10 +90,8 @@ if __name__ == "__main__":
     root = Path(__file__).resolve().parent
     joined_path = root / "volunteer_with_digitizations.csv"
     if not joined_path.exists():
-        print("Run main.py first to create volunteer_with_digitizations.csv", file=sys.stderr)
         sys.exit(1)
     df = pd.read_csv(joined_path)
     fitted = run_fit_batch(df)
     out_path = root / "volunteer_fitted.csv"
     fitted.to_csv(out_path, index=False)
-    print(f"Wrote {len(fitted)} rows to {out_path}")

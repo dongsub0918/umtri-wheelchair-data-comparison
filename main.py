@@ -53,4 +53,23 @@ offset_cols = ["seatWidth_offset", "seatDepth_offset", "panHeight_offset"]
 rest = [c for c in joined.columns if c not in fit_cols + digit_cols + offset_cols]
 joined = joined[rest + fit_cols + digit_cols + offset_cols]
 
+# Print median offsets by WC Type (Manual vs Power)
+wc_type_s = joined["WC Type"].fillna("").astype(str).str.strip().str.lower()
+manual_mask = wc_type_s.eq("manual")
+power_mask = wc_type_s.isin(["power", "powered", "stroller"])
+
+median_seatWidth_offset_manual = joined.loc[manual_mask, "seatWidth_offset"].median()
+median_seatDepth_offset_manual = joined.loc[manual_mask, "seatDepth_offset"].median()
+median_panHeight_offset_manual = joined.loc[manual_mask, "panHeight_offset"].median()
+median_seatWidth_offset_power = joined.loc[power_mask, "seatWidth_offset"].median()
+median_seatDepth_offset_power = joined.loc[power_mask, "seatDepth_offset"].median()
+median_panHeight_offset_power = joined.loc[power_mask, "panHeight_offset"].median()
+
+print(f"Median seatWidth_offset (WC Type Manual): {median_seatWidth_offset_manual}")
+print(f"Median seatDepth_offset (WC Type Manual): {median_seatDepth_offset_manual}")
+print(f"Median panHeight_offset (WC Type Manual): {median_panHeight_offset_manual}")
+print(f"Median seatWidth_offset (WC Type Power): {median_seatWidth_offset_power}")
+print(f"Median seatDepth_offset (WC Type Power): {median_seatDepth_offset_power}")
+print(f"Median panHeight_offset (WC Type Power): {median_panHeight_offset_power}")
+
 joined.to_csv("volunteer_with_digitizations.csv", index=False)
